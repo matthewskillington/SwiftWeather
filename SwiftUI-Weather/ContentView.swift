@@ -13,6 +13,9 @@ struct ContentView: View {
     
     @State private var isNight = false
     @State var cityWeather: CityWeather = CityWeather(name: "", id: 0, main: TempData())
+    @State private var isEditing = false
+    @State private var locationInput: String = ""
+    
     
     var body: some View {
         ZStack {
@@ -33,6 +36,19 @@ struct ContentView: View {
                 }
                 Spacer()
                 
+                TextField("Location", text: $locationInput){ isEditing in
+                    self.isEditing = isEditing
+                } onCommit: {
+                    validate(cityName: locationInput)
+                }
+                .frame(width: 240, height: 40)
+                .padding(.horizontal, 20)
+                .background(Color.white)
+
+                
+                
+                Spacer()
+                
                 Button{
                     isNight.toggle()
                 } label: {
@@ -43,23 +59,29 @@ struct ContentView: View {
             }
         }
         .onAppear(){
-            getCityWeatherData()
+            getCityWeatherData(cityName: "London")
         }
     }
 }
 
 extension ContentView {
-    func getCityWeatherData() {
-        Network().getCityWeather {(result) in
-            switch result {
-            case .success(let cityWeather):
-                DispatchQueue.main.async {
-                    self.cityWeather = cityWeather
-                }
-            case .failure(let error):
-                print(error.localizedDescription)
+    func getCityWeatherData(cityName: String) {
+        Network().getCityWeather(completion: resultHandler, cityName: cityName)
+    }
+    
+    func resultHandler(result: Result<CityWeather, Error>){
+        switch result {
+        case .success(let cityWeather):
+            DispatchQueue.main.async {
+                self.cityWeather = cityWeather
             }
+        case .failure(let error):
+            print(error.localizedDescription)
         }
+    }
+    
+    func validate(cityName: String){
+        getCityWeatherData(cityName: cityName)
     }
 }
 
